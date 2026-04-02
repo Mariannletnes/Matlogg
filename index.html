@@ -8,59 +8,46 @@
 </head>
 <body>
   <main class="container">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Matlogg</p>
-        <h1>Lim inn en oppskrift og få kcal og protein</h1>
-        <p class="lead">Skriv én ingrediens per linje. Appen prøver å tolke mengde, enhet og ingrediens automatisk.</p>
-      </div>
-    </header>
-
     <section class="card">
-      <div class="section-head">
-        <h2>Ny oppskrift</h2>
-      </div>
+      <h1>Matlogg</h1>
+      <p class="lead">Lim inn en oppskrift. Appen prøver å tolke ingrediensene og regner ut energi, protein, karbohydrat og fett.</p>
 
       <div class="grid two">
         <label>
-          Navn på oppskrift
+          <span>Navn på oppskrift</span>
           <input id="recipeName" type="text" placeholder="For eksempel proteinbrød" />
         </label>
 
         <label>
-          Antall porsjoner
+          <span>Antall porsjoner</span>
           <input id="servings" type="number" min="1" step="1" value="1" />
         </label>
       </div>
 
-      <label>
-        Lim inn oppskrift
-        <textarea id="recipeInput" rows="12" placeholder="4 dl lunkent vann
+      <label class="mt">
+        <span>Lim inn oppskrift</span>
+        <textarea id="recipeInput" rows="10" placeholder="For eksempel:
+4 dl lunkent vann
 1 pose tørrgjær
 1 ts salt
 1 ss olje
-150 g hvetemel
-220 g sammalt hvete fin
-200 g havregryn
-20 g solsikkekjerner
-2 ss chiafrø
-300 g mager kesam"></textarea>
+150 g hvetemel"></textarea>
       </label>
 
-      <div class="button-row">
+      <div class="buttonRow">
         <button id="parseBtn" class="primary">Tolk oppskrift</button>
-        <button id="fillExampleBtn" class="secondary">Legg inn eksempel</button>
+        <button id="exampleBtn" class="secondary">Legg inn eksempel</button>
         <button id="clearBtn" class="ghost">Tøm</button>
       </div>
     </section>
 
-    <section class="card hidden" id="resultsCard">
-      <div class="section-head">
+    <section class="card">
+      <div class="sectionHeader">
         <h2>Resultat</h2>
-        <p id="matchStatus" class="muted"></p>
+        <p id="parseStatus" class="muted"></p>
       </div>
 
-      <div class="table-wrap">
+      <div class="tableWrap">
         <table>
           <thead>
             <tr>
@@ -69,6 +56,8 @@
               <th>Mengde i gram</th>
               <th>kcal</th>
               <th>Protein</th>
+              <th>Karbohydrat</th>
+              <th>Fett</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -76,32 +65,40 @@
         </table>
       </div>
 
-      <div class="summary-grid">
-        <div class="summary-box">
+      <div class="summaryGrid">
+        <div class="summaryCard">
           <span>Total energi</span>
           <strong id="totalKcal">0 kcal</strong>
         </div>
-        <div class="summary-box">
-          <span>Totalt protein</span>
+        <div class="summaryCard">
+          <span>Total protein</span>
           <strong id="totalProtein">0 g</strong>
         </div>
-        <div class="summary-box">
+        <div class="summaryCard">
+          <span>Total karbohydrat</span>
+          <strong id="totalCarbs">0 g</strong>
+        </div>
+        <div class="summaryCard">
+          <span>Total fett</span>
+          <strong id="totalFat">0 g</strong>
+        </div>
+        <div class="summaryCard">
           <span>Per porsjon energi</span>
-          <strong id="perServingKcal">0 kcal</strong>
+          <strong id="perKcal">0 kcal</strong>
         </div>
-        <div class="summary-box">
+        <div class="summaryCard">
           <span>Per porsjon protein</span>
-          <strong id="perServingProtein">0 g</strong>
+          <strong id="perProtein">0 g</strong>
+        </div>
+        <div class="summaryCard">
+          <span>Per porsjon karbohydrat</span>
+          <strong id="perCarbs">0 g</strong>
+        </div>
+        <div class="summaryCard">
+          <span>Per porsjon fett</span>
+          <strong id="perFat">0 g</strong>
         </div>
       </div>
-    </section>
-
-    <section class="card">
-      <div class="section-head">
-        <h2>Kjente ingredienser i denne prototypen</h2>
-        <p class="muted">Disse ligger lokalt i appen nå. Neste steg kan være oppslag mot Matvaretabellen.</p>
-      </div>
-      <div id="ingredientList" class="ingredient-list"></div>
     </section>
   </main>
 

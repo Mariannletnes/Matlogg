@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matapp</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Matapp</h1>
+      <p>Legg inn oppskrifter og før en enkel dagbok med kalorier og protein.</p>
+    </header>
+
+    <section class="card">
+      <h2>Ny oppskrift</h2>
+      <div class="grid two">
+        <label>
+          Navn på oppskrift
+          <input type="text" id="recipeName" placeholder="For eksempel proteinbrød" />
+        </label>
+        <label>
+          Antall porsjoner
+          <input type="number" id="recipeServings" min="1" step="1" value="1" />
+        </label>
+      </div>
+
+      <div class="ingredient-head">
+        <h3>Ingredienser</h3>
+        <button id="addIngredientBtn" class="secondary">Legg til ingrediens</button>
+      </div>
+
+      <div id="ingredientsContainer"></div>
+
+      <div class="totals preview" id="recipePreview">
+        <div>
+          <span>Totalt kcal</span>
+          <strong id="previewCalories">0</strong>
+        </div>
+        <div>
+          <span>Totalt protein</span>
+          <strong id="previewProtein">0 g</strong>
+        </div>
+        <div>
+          <span>Per porsjon kcal</span>
+          <strong id="previewCaloriesPerServing">0</strong>
+        </div>
+        <div>
+          <span>Per porsjon protein</span>
+          <strong id="previewProteinPerServing">0 g</strong>
+        </div>
+      </div>
+
+      <button id="saveRecipeBtn">Lagre oppskrift</button>
+      <p class="message" id="recipeMessage"></p>
+    </section>
+
+    <section class="card">
+      <h2>Lagrede oppskrifter</h2>
+      <div id="recipesList" class="recipes-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Matdagbok</h2>
+      <div class="grid two">
+        <label>
+          Dato
+          <input type="date" id="diaryDate" />
+        </label>
+        <label>
+          Måltid
+          <select id="mealType">
+            <option>Frokost</option>
+            <option>Lunsj</option>
+            <option>Middag</option>
+            <option>Kveldsmat</option>
+            <option>Mellommåltid</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid two">
+        <label>
+          Velg oppskrift
+          <select id="recipeSelect"></select>
+        </label>
+        <label>
+          Antall porsjoner spist
+          <input type="number" id="portionsEaten" min="0.25" step="0.25" value="1" />
+        </label>
+      </div>
+
+      <button id="addToDiaryBtn">Legg til i dagbok</button>
+      <p class="message" id="diaryMessage"></p>
+
+      <div class="totals diary-totals">
+        <div>
+          <span>Dagens kcal</span>
+          <strong id="dayCalories">0</strong>
+        </div>
+        <div>
+          <span>Dagens protein</span>
+          <strong id="dayProtein">0 g</strong>
+        </div>
+      </div>
+
+      <div id="diaryEntries" class="diary-entries"></div>
+    </section>
+  </div>
+
+  <template id="ingredientRowTemplate">
+    <div class="ingredient-row">
+      <label>
+        Ingrediens
+        <input type="text" class="ingredient-name" placeholder="For eksempel havregryn" />
+      </label>
+      <label>
+        Gram
+        <input type="number" class="ingredient-grams" min="0" step="1" value="0" />
+      </label>
+      <label>
+        Kcal per 100 g
+        <input type="number" class="ingredient-calories" min="0" step="0.1" value="0" />
+      </label>
+      <label>
+        Protein per 100 g
+        <input type="number" class="ingredient-protein" min="0" step="0.1" value="0" />
+      </label>
+      <button class="danger remove-ingredient-btn" type="button">Fjern</button>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

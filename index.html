@@ -1,120 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matlogg</title>
-  <link rel="stylesheet" href="style.css?v=20">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matlogg - Oppskriftsanalyse</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="container">
-    <section class="card">
-      <h1>Matlogg</h1>
-      <p>Lim inn én ingrediens per linje. Appen foreslår matvarer. Du velger riktig treff.</p>
+    <main class="container">
+        <section class="card">
+            <h1>Matlogg</h1>
+            <p>Lim inn ingredienser (f.eks. "150 g havregryn") for å beregne næringsinnhold.</p>
 
-      <div class="form-grid">
-        <div class="field">
-          <label for="recipeName">Navn på oppskrift</label>
-          <input id="recipeName" type="text" placeholder="For eksempel proteinbrød">
-        </div>
+            <div class="field">
+                <label for="recipeInput">Oppskrift</label>
+                <textarea id="recipeInput" rows="8" placeholder="150 g havregryn&#10;2 egg"></textarea>
+            </div>
 
-        <div class="field">
-          <label for="servings">Antall porsjoner</label>
-          <input id="servings" type="number" min="1" value="1">
-        </div>
-      </div>
+            <div class="button-row">
+                <button id="parseBtn" class="primary">Analyser oppskrift</button>
+            </div>
+        </section>
 
-      <div class="field">
-        <label for="recipeInput">Ingredienser</label>
-        <textarea id="recipeInput" rows="10" placeholder="For eksempel:
-150 g havregryn
-2 egg
-1 eple
-300 g mager kesam"></textarea>
-      </div>
+        <section class="card">
+            <h2>Resultater</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Original linje</th>
+                            <th>Ingrediens</th>
+                            <th>Beregnet vekt</th>
+                            <th>Energi (kcal)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <!-- Her danner JS rader dynamisk -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 
-      <div class="button-row">
-        <button id="parseBtn" class="primary" type="button">Tolk oppskrift</button>
-        <button id="exampleBtn" type="button">Legg inn eksempel</button>
-        <button id="clearBtn" type="button">Tøm</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="section-header">
-        <h2>Forslag og valg</h2>
-        <p id="statusText" class="muted">Ingen ingredienser tolket ennå.</p>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Linje</th>
-              <th>Tolket ingrediens</th>
-              <th>Gram</th>
-              <th>Søkeord</th>
-              <th>Forslag</th>
-              <th>Valgt vare</th>
-              <th>kcal</th>
-              <th>Protein</th>
-              <th>Karbohydrat</th>
-              <th>Fett</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Oppsummering</h2>
-
-      <div class="summary-grid">
-        <div class="summary-box">
-          <div class="summary-label">Total energi</div>
-          <div id="totalKcal" class="summary-value">0 kcal</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Total protein</div>
-          <div id="totalProtein" class="summary-value">0 g</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Total karbohydrat</div>
-          <div id="totalCarbs" class="summary-value">0 g</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Total fett</div>
-          <div id="totalFat" class="summary-value">0 g</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Per porsjon energi</div>
-          <div id="perKcal" class="summary-value">0 kcal</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Per porsjon protein</div>
-          <div id="perProtein" class="summary-value">0 g</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Per porsjon karbohydrat</div>
-          <div id="perCarbs" class="summary-value">0 g</div>
-        </div>
-
-        <div class="summary-box">
-          <div class="summary-label">Per porsjon fett</div>
-          <div id="perFat" class="summary-value">0 g</div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script src="app.js?v=20"></script>
+    <!-- Viktig: app.js må lastes til slutt -->
+    <script src="app.js"></script>
 </body>
 </html>

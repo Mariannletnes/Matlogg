@@ -8,7 +8,13 @@ const fallbackDb = {
   "bananer": { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
   "eple": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
   "epler": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
+  "appelsin": { kcal: 47, protein: 0.9, carbs: 11.8, fat: 0.1 },
+  "appelsiner": { kcal: 47, protein: 0.9, carbs: 11.8, fat: 0.1 },
+  "pære": { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 },
+  "pærer": { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 },
   "kyllingfilet": { kcal: 120, protein: 23, carbs: 0, fat: 2 },
+  "oksefilet": { kcal: 125, protein: 22, carbs: 0, fat: 4 },
+  "laksefilet": { kcal: 208, protein: 20, carbs: 0, fat: 13 },
   "makrell i tomat": { kcal: 220, protein: 13, carbs: 4, fat: 16 },
   "vann": { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   "tørrgjær": { kcal: 325, protein: 40, carbs: 20, fat: 6 },
@@ -37,7 +43,11 @@ const unitToGrams = {
   "banan": 120,
   "bananer": 120,
   "eple": 180,
-  "epler": 180
+  "epler": 180,
+  "appelsin": 180,
+  "appelsiner": 180,
+  "pære": 170,
+  "pærer": 170
 };
 
 function normalizeText(text) {
@@ -45,8 +55,9 @@ function normalizeText(text) {
     .toLowerCase()
     .trim()
     .replace(/\blunkent\b/g, "")
-    .replace(/\s+/g, " ")
-    .replace(/[.,]$/, "");
+    .replace(/\brå\b/g, "rå")
+    .replace(/[.,]$/, "")
+    .replace(/\s+/g, " ");
 }
 
 function getIngredientVariants(text) {
@@ -117,6 +128,52 @@ function extractMacros(food) {
   return { kcal, protein, carbs, fat };
 }
 
+function badMatchPenalty(name) {
+  const bannedWords = [
+    "cider",
+    "øl",
+    "vin",
+    "brus",
+    "saft",
+    "juice",
+    "likør",
+    "drink",
+    "cocktail",
+    "energidrikk",
+    "is",
+    "godteri",
+    "snacks"
+  ];
+
+  let penalty = 0;
+
+  for (const word of bannedWords) {
+    if (name.includes(word)) {
+      penalty -= 80;
+    }
+  }
+
+  return penalty;
+}
+
+function goodMatchBonus(name, query) {
+  let bonus = 0;
+
+  if (name.includes("rå")) {
+    bonus += 20;
+  }
+
+  if (name.includes("naturell")) {
+    bonus += 10;
+  }
+
+  if (name.includes(query)) {
+    bonus += 25;
+  }
+
+  return bonus;
+}
+
 function scoreFoodMatch(food, query) {
   const q = normalizeText(query);
   const name = normalizeText(food.foodName || "");
@@ -124,17 +181,23 @@ function scoreFoodMatch(food, query) {
     ? food.searchKeywords.map(k => normalizeText(k))
     : [];
 
-  if (name === q) return 100;
-  if (keywords.includes(q)) return 95;
-  if (name.includes(q)) return 80;
-  if (q.includes(name) && name.length > 2) return 70;
+  let score = 0;
+
+  if (name === q) score += 100;
+  if (keywords.includes(q)) score += 95;
+  if (name.includes(q)) score += 70;
+  if (q.includes(name) && name.length > 2) score += 50;
 
   for (const keyword of keywords) {
-    if (q.includes(keyword) && keyword.length > 2) return 65;
-    if (keyword.includes(q) && q.length > 2) return 60;
+    if (q === keyword) score += 80;
+    if (q.includes(keyword) && keyword.length > 2) score += 45;
+    if (keyword.includes(q) && q.length > 2) score += 35;
   }
 
-  return 0;
+  score += goodMatchBonus(name, q);
+  score += badMatchPenalty(name);
+
+  return score;
 }
 
 function findBestFood(query) {
@@ -208,12 +271,16 @@ function parseLine(line) {
     amount = parseFloat(match[1].replace(",", "."));
     ingredient = match[2].trim().toLowerCase();
 
-    if (ingredient === "egg" || ingredient === "eggene") {
+    if (["egg", "eggene"].includes(ingredient)) {
       unit = "egg";
       ingredient = "egg";
-    } else if (ingredient === "banan" || ingredient === "bananer") {
+    } else if (["banan", "bananer"].includes(ingredient)) {
       unit = ingredient;
-    } else if (ingredient === "eple" || ingredient === "epler") {
+    } else if (["eple", "epler"].includes(ingredient)) {
+      unit = ingredient;
+    } else if (["appelsin", "appelsiner"].includes(ingredient)) {
+      unit = ingredient;
+    } else if (["pære", "pærer"].includes(ingredient)) {
       unit = ingredient;
     } else {
       unit = "";

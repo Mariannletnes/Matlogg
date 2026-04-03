@@ -1,49 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matlogg - Oppskriftsanalyse</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matlogg - Oppskriftsanalyse</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main class="container">
-        <section class="card">
-            <h1>Matlogg</h1>
-            <p>Lim inn ingredienser (f.eks. "150 g havregryn") for å beregne næringsinnhold.</p>
+  <main class="container">
+    <section class="card">
+      <h1>Matlogg</h1>
+      <p>Lim inn én ingrediens per linje for å beregne næringsinnholdet.</p>
 
-            <div class="field">
-                <label for="recipeInput">Oppskrift</label>
-                <textarea id="recipeInput" rows="8" placeholder="150 g havregryn&#10;2 egg"></textarea>
-            </div>
+      <div class="field">
+        <label for="recipeInput">Oppskrift</label>
+        <textarea id="recipeInput" rows="8" placeholder="For eksempel:&#10;150 g havregryn&#10;2 egg&#10;3 epler"></textarea>
+      </div>
 
-            <div class="button-row">
-                <button id="parseBtn" class="primary">Analyser oppskrift</button>
-            </div>
-        </section>
+      <div class="button-row">
+        <button id="parseBtn" class="primary" type="button">Analyser oppskrift</button>
+      </div>
+    </section>
 
-        <section class="card">
-            <h2>Resultater</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Original linje</th>
-                            <th>Ingrediens</th>
-                            <th>Beregnet vekt</th>
-                            <th>Energi (kcal)</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody">
-                        <!-- Her danner JS rader dynamisk -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+    <section class="card">
+      <h2>Resultater</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Original linje</th>
+              <th>Ingrediens</th>
+              <th>Vekt</th>
+              <th>Energi (kcal)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <!-- JavaScript-koden vil fylle inn radene her automatisk -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-    <!-- Viktig: app.js må lastes til slutt -->
-    <script src="app.js"></script>
+  <!-- Dette er linjen som kobler HTML-siden sammen med JavaScript-motoren vår -->
+  <script src="app.js"></script>
 </body>
 </html>

@@ -3,251 +3,42 @@ const MATVARE_URL = "https://www.matvaretabellen.no/api/nb/foods.json";
 let foodsCache = [];
 
 const fallbackDb = {
-  "egg": { kcal: 143, protein: 13, carbs: 1.1, fat: 10.3 },
-  "banan": { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
-  "bananer": { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
-  "eple": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
-  "epler": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
-  "appelsin": { kcal: 47, protein: 0.9, carbs: 11.8, fat: 0.1 },
-  "appelsiner": { kcal: 47, protein: 0.9, carbs: 11.8, fat: 0.1 },
-  "pære": { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 },
-  "pærer": { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 },
-  "kyllingfilet": { kcal: 120, protein: 23, carbs: 0, fat: 2 },
-  "oksefilet": { kcal: 125, protein: 22, carbs: 0, fat: 4 },
-  "laksefilet": { kcal: 208, protein: 20, carbs: 0, fat: 13 },
-  "makrell i tomat": { kcal: 220, protein: 13, carbs: 4, fat: 16 },
-  "vann": { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  "tørrgjær": { kcal: 325, protein: 40, carbs: 20, fat: 6 },
-  "salt": { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  "olje": { kcal: 900, protein: 0, carbs: 0, fat: 100 },
-  "hvetemel": { kcal: 340, protein: 10, carbs: 71, fat: 1.5 },
-  "sammalt hvete fin": { kcal: 336, protein: 13, carbs: 60, fat: 2.5 },
-  "havregryn": { kcal: 366, protein: 13, carbs: 60, fat: 7 },
-  "solsikkekjerner": { kcal: 585, protein: 21, carbs: 12, fat: 51 },
-  "chiafrø": { kcal: 446, protein: 21, carbs: 4, fat: 31 },
-  "mager kesam": { kcal: 59, protein: 10, carbs: 3.9, fat: 1 },
-  "kesam": { kcal: 59, protein: 10, carbs: 3.9, fat: 1 }
+  egg: { kcal: 143, protein: 13, carbs: 1.1, fat: 10.3 },
+  banan: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
+  eple: { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
+  appelsin: { kcal: 47, protein: 0.9, carbs: 11.8, fat: 0.1 },
+  pære: { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 },
+  kyllingfilet: { kcal: 120, protein: 23, carbs: 0, fat: 2 },
+  oksefilet: { kcal: 125, protein: 22, carbs: 0, fat: 4 },
+  lam: { kcal: 250, protein: 25, carbs: 0, fat: 18 },
+  laks: { kcal: 208, protein: 20, carbs: 0, fat: 13 },
+  potet: { kcal: 77, protein: 2, carbs: 17, fat: 0.1 },
+  hodekål: { kcal: 25, protein: 1.3, carbs: 6, fat: 0.1 }
 };
 
 const unitToGrams = {
-  "g": 1,
-  "gram": 1,
-  "kg": 1000,
-  "dl": 100,
-  "l": 1000,
-  "ts": 5,
-  "ss": 13,
-  "pose": 11,
-  "boks": 110,
-  "egg": 60,
-  "banan": 120,
-  "bananer": 120,
-  "eple": 180,
-  "epler": 180,
-  "appelsin": 180,
-  "appelsiner": 180,
-  "pære": 170,
-  "pærer": 170
+  g: 1,
+  gram: 1,
+  kg: 1000,
+  dl: 100,
+  l: 1000,
+  ts: 5,
+  ss: 13,
+  egg: 60,
+  banan: 120,
+  eple: 180,
+  appelsin: 180,
+  pære: 170,
+  hodekål: 900,
+  løk: 100
 };
 
-function normalizeText(text) {
-  return (text || "")
+function normalize(text) {
+  return text
     .toLowerCase()
     .trim()
-    .replace(/\blunkent\b/g, "")
-    .replace(/\brå\b/g, "rå")
-    .replace(/[.,]$/, "")
+    .replace(/[.,]/g, "")
     .replace(/\s+/g, " ");
-}
-
-function getIngredientVariants(text) {
-  const value = normalizeText(text);
-  const variants = [value];
-
-  if (value.endsWith("er")) {
-    variants.push(value.slice(0, -2));
-  }
-
-  if (value.endsWith("ene")) {
-    variants.push(value.slice(0, -3));
-  }
-
-  if (!value.endsWith("er")) {
-    variants.push(value + "er");
-  }
-
-  return [...new Set(variants.filter(Boolean))];
-}
-
-async function loadFoods() {
-  if (foodsCache.length > 0) {
-    return foodsCache;
-  }
-
-  const response = await fetch(MATVARE_URL);
-  const data = await response.json();
-  foodsCache = data.foods || [];
-  return foodsCache;
-}
-
-function findQuantityDeep(obj, needles) {
-  if (!obj || typeof obj !== "object") {
-    return null;
-  }
-
-  for (const [key, value] of Object.entries(obj)) {
-    const lowerKey = key.toLowerCase();
-
-    if (needles.some(needle => lowerKey.includes(needle))) {
-      if (value && typeof value === "object" && typeof value.quantity === "number") {
-        return value.quantity;
-      }
-
-      if (typeof value === "number") {
-        return value;
-      }
-    }
-
-    if (value && typeof value === "object") {
-      const nested = findQuantityDeep(value, needles);
-      if (nested !== null) {
-        return nested;
-      }
-    }
-  }
-
-  return null;
-}
-
-function extractMacros(food) {
-  const kcal = findQuantityDeep(food, ["kcal", "calories", "energi"]) ?? 0;
-  const protein = findQuantityDeep(food, ["protein"]) ?? 0;
-  const carbs = findQuantityDeep(food, ["karbo", "carb"]) ?? 0;
-  const fat = findQuantityDeep(food, ["fett", "fat"]) ?? 0;
-
-  return { kcal, protein, carbs, fat };
-}
-
-function badMatchPenalty(name) {
-  const bannedWords = [
-    "cider",
-    "øl",
-    "vin",
-    "brus",
-    "saft",
-    "juice",
-    "likør",
-    "drink",
-    "cocktail",
-    "energidrikk",
-    "is",
-    "godteri",
-    "snacks"
-  ];
-
-  let penalty = 0;
-
-  for (const word of bannedWords) {
-    if (name.includes(word)) {
-      penalty -= 80;
-    }
-  }
-
-  return penalty;
-}
-
-function goodMatchBonus(name, query) {
-  let bonus = 0;
-
-  if (name.includes("rå")) {
-    bonus += 20;
-  }
-
-  if (name.includes("naturell")) {
-    bonus += 10;
-  }
-
-  if (name.includes(query)) {
-    bonus += 25;
-  }
-
-  return bonus;
-}
-
-function scoreFoodMatch(food, query) {
-  const q = normalizeText(query);
-  const name = normalizeText(food.foodName || "");
-  const keywords = Array.isArray(food.searchKeywords)
-    ? food.searchKeywords.map(k => normalizeText(k))
-    : [];
-
-  let score = 0;
-
-  if (name === q) score += 100;
-  if (keywords.includes(q)) score += 95;
-  if (name.includes(q)) score += 70;
-  if (q.includes(name) && name.length > 2) score += 50;
-
-  for (const keyword of keywords) {
-    if (q === keyword) score += 80;
-    if (q.includes(keyword) && keyword.length > 2) score += 45;
-    if (keyword.includes(q) && q.length > 2) score += 35;
-  }
-
-  score += goodMatchBonus(name, q);
-  score += badMatchPenalty(name);
-
-  return score;
-}
-
-function findBestFood(query) {
-  const scored = foodsCache
-    .map(food => ({
-      food,
-      score: scoreFoodMatch(food, query)
-    }))
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  return scored.length ? scored[0].food : null;
-}
-
-async function lookupIngredient(ingredientName) {
-  const variants = getIngredientVariants(ingredientName);
-
-  for (const variant of variants) {
-    if (fallbackDb[variant]) {
-      return {
-        ingredientName: variant,
-        macros: fallbackDb[variant],
-        status: "OK"
-      };
-    }
-  }
-
-  try {
-    await loadFoods();
-
-    for (const variant of variants) {
-      const match = findBestFood(variant);
-
-      if (match) {
-        return {
-          ingredientName: match.foodName || variant,
-          macros: extractMacros(match),
-          status: "OK"
-        };
-      }
-    }
-  } catch (error) {
-    console.log("Klarte ikke å hente Matvaretabellen", error);
-  }
-
-  return {
-    ingredientName: normalizeText(ingredientName),
-    macros: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-    status: "Ukjent"
-  };
 }
 
 function parseLine(line) {
@@ -255,112 +46,211 @@ function parseLine(line) {
   let unit = "";
   let ingredient = "";
 
-  let match = line.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZæøåÆØÅ]+)\s+(.+)$/i);
+  let match = line.match(/^(\d+(?:[.,]\d+)?)\s*([a-zæøå]+)\s+(.+)$/i);
 
   if (match) {
     amount = parseFloat(match[1].replace(",", "."));
     unit = match[2].toLowerCase();
-    ingredient = match[3].trim();
+    ingredient = normalize(match[3]);
   } else {
     match = line.match(/^(\d+(?:[.,]\d+)?)\s+(.+)$/i);
 
-    if (!match) {
-      return null;
-    }
+    if (!match) return null;
 
     amount = parseFloat(match[1].replace(",", "."));
-    ingredient = match[2].trim().toLowerCase();
+    ingredient = normalize(match[2]);
 
-    if (["egg", "eggene"].includes(ingredient)) {
-      unit = "egg";
-      ingredient = "egg";
-    } else if (["banan", "bananer"].includes(ingredient)) {
+    if (unitToGrams[ingredient]) {
       unit = ingredient;
-    } else if (["eple", "epler"].includes(ingredient)) {
-      unit = ingredient;
-    } else if (["appelsin", "appelsiner"].includes(ingredient)) {
-      unit = ingredient;
-    } else if (["pære", "pærer"].includes(ingredient)) {
-      unit = ingredient;
-    } else {
-      unit = "";
     }
   }
 
   const grams = unitToGrams[unit] ? amount * unitToGrams[unit] : amount;
 
+  return { ingredient, grams, original: line };
+}
+
+async function loadFoods() {
+  if (foodsCache.length) return foodsCache;
+
+  const res = await fetch(MATVARE_URL);
+  const data = await res.json();
+
+  foodsCache = data.foods || [];
+  return foodsCache;
+}
+
+function extractMacros(food) {
+  const nutrients = food.nutrients || [];
+
+  let kcal = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+
+  for (const n of nutrients) {
+    const name = normalize(n.name);
+
+    if (name.includes("energi")) kcal = n.value;
+    if (name.includes("protein")) protein = n.value;
+    if (name.includes("karbo")) carbs = n.value;
+    if (name.includes("fett")) fat = n.value;
+  }
+
+  return { kcal, protein, carbs, fat };
+}
+
+function scoreMatch(foodName, query) {
+  const name = normalize(foodName);
+
+  let score = 0;
+
+  if (name === query) score += 100;
+  if (name.includes(query)) score += 50;
+
+  const bad = [
+    "øl",
+    "vin",
+    "cider",
+    "brus",
+    "saft",
+    "juice",
+    "drink",
+    "godteri",
+    "is"
+  ];
+
+  for (const word of bad) {
+    if (name.includes(word)) score -= 80;
+  }
+
+  if (name.includes("rå")) score += 20;
+
+  return score;
+}
+
+function findBestMatch(query) {
+  let best = null;
+  let bestScore = 0;
+
+  for (const food of foodsCache) {
+    const score = scoreMatch(food.foodName, query);
+
+    if (score > bestScore) {
+      best = food;
+      bestScore = score;
+    }
+  }
+
+  return best;
+}
+
+async function lookupIngredient(name) {
+  const ingredient = normalize(name);
+
+  if (fallbackDb[ingredient]) {
+    return {
+      name: ingredient,
+      macros: fallbackDb[ingredient],
+      status: "OK"
+    };
+  }
+
+  try {
+    await loadFoods();
+
+    const match = findBestMatch(ingredient);
+
+    if (match) {
+      return {
+        name: match.foodName,
+        macros: extractMacros(match),
+        status: "OK"
+      };
+    }
+  } catch {}
+
   return {
-    originalLine: line,
-    ingredient: normalizeText(ingredient),
-    grams
+    name: ingredient,
+    macros: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+    status: "Ukjent"
   };
 }
 
-function setTotals(totalKcal, totalProtein, totalCarbs, totalFat, servings) {
-  document.getElementById("totalKcal").innerText = Math.round(totalKcal) + " kcal";
-  document.getElementById("totalProtein").innerText = totalProtein.toFixed(1) + " g";
-  document.getElementById("totalCarbs").innerText = totalCarbs.toFixed(1) + " g";
-  document.getElementById("totalFat").innerText = totalFat.toFixed(1) + " g";
+function setTotals(kcal, protein, carbs, fat, portions) {
+  document.getElementById("totalKcal").innerText = Math.round(kcal) + " kcal";
+  document.getElementById("totalProtein").innerText = protein.toFixed(1) + " g";
+  document.getElementById("totalCarbs").innerText = carbs.toFixed(1) + " g";
+  document.getElementById("totalFat").innerText = fat.toFixed(1) + " g";
 
-  document.getElementById("perKcal").innerText = Math.round(totalKcal / servings) + " kcal";
-  document.getElementById("perProtein").innerText = (totalProtein / servings).toFixed(1) + " g";
-  document.getElementById("perCarbs").innerText = (totalCarbs / servings).toFixed(1) + " g";
-  document.getElementById("perFat").innerText = (totalFat / servings).toFixed(1) + " g";
+  document.getElementById("perKcal").innerText =
+    Math.round(kcal / portions) + " kcal";
+  document.getElementById("perProtein").innerText =
+    (protein / portions).toFixed(1) + " g";
+  document.getElementById("perCarbs").innerText =
+    (carbs / portions).toFixed(1) + " g";
+  document.getElementById("perFat").innerText =
+    (fat / portions).toFixed(1) + " g";
 }
 
 async function parseRecipe() {
   const text = document.getElementById("recipeInput").value;
-  const servings = parseInt(document.getElementById("servings").value, 10) || 1;
-  const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
+  const portions =
+    parseInt(document.getElementById("servings").value) || 1;
+
+  const lines = text
+    .split("\n")
+    .map(l => l.trim())
+    .filter(Boolean);
 
   const tbody = document.getElementById("resultsBody");
   tbody.innerHTML = "";
 
-  let totalKcal = 0;
-  let totalProtein = 0;
-  let totalCarbs = 0;
-  let totalFat = 0;
+  let kcal = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
 
   for (const line of lines) {
     const parsed = parseLine(line);
 
-    if (!parsed) {
-      continue;
-    }
+    if (!parsed) continue;
 
-    const lookup = await lookupIngredient(parsed.ingredient);
+    const result = await lookupIngredient(parsed.ingredient);
+
     const factor = parsed.grams / 100;
 
-    const kcal = lookup.macros.kcal * factor;
-    const protein = lookup.macros.protein * factor;
-    const carbs = lookup.macros.carbs * factor;
-    const fat = lookup.macros.fat * factor;
+    const k = result.macros.kcal * factor;
+    const p = result.macros.protein * factor;
+    const c = result.macros.carbs * factor;
+    const f = result.macros.fat * factor;
 
-    totalKcal += kcal;
-    totalProtein += protein;
-    totalCarbs += carbs;
-    totalFat += fat;
+    kcal += k;
+    protein += p;
+    carbs += c;
+    fat += f;
 
     const row = document.createElement("tr");
+
     row.innerHTML = `
-      <td>${line}</td>
-      <td>${lookup.ingredientName}</td>
-      <td>${Math.round(parsed.grams)}</td>
-      <td>${Math.round(kcal)}</td>
-      <td>${protein.toFixed(1)} g</td>
-      <td>${carbs.toFixed(1)} g</td>
-      <td>${fat.toFixed(1)} g</td>
-      <td>${lookup.status}</td>
-    `;
+<td>${line}</td>
+<td>${result.name}</td>
+<td>${Math.round(parsed.grams)}</td>
+<td>${Math.round(k)}</td>
+<td>${p.toFixed(1)} g</td>
+<td>${c.toFixed(1)} g</td>
+<td>${f.toFixed(1)} g</td>
+<td>${result.status}</td>
+`;
 
     tbody.appendChild(row);
   }
 
-  setTotals(totalKcal, totalProtein, totalCarbs, totalFat, servings);
+  setTotals(kcal, protein, carbs, fat, portions);
 }
 
-document.getElementById("parseBtn").addEventListener("click", parseRecipe);
+document
+  .getElementById("parseBtn")
+  .addEventListener("click", parseRecipe);
 
-loadFoods().catch(() => {
-  console.log("Matvaretabellen kunne ikke lastes ved oppstart.");
-});
+loadFoods().catch(() => {});

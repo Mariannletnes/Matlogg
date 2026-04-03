@@ -1,56 +1,69 @@
-// 1. Konfigurasjon og Proxy for å unngå CORS-feil på GitHub[cite: 1]
-const PROXY_URL = "https://corsproxy.io/?";
+// 1. Konfigurasjon og en mer stabil Proxy
+const PROXY_URL = "https://api.allorigins.win/raw?url=";
 const MATVARE_URL = encodeURIComponent("https://www.matvaretabellen.no/api/nb/foods.json");
 let foodsCache = [];
 let rowsState = [];
 
-// Standardvekter for enheter[cite: 1]
+// 2. Utvidet vekt-ordbok (inkluderer flertall)
 const unitToGrams = {
-    "g": 1, "gram": 1, "kg": 1000, "dl": 100, "l": 1000, "stk": 100, "eple": 150, "egg": 60
+    "g": 1, "gram": 1, "kg": 1000, "dl": 100, "l": 1000, "stk": 100,
+    "eple": 150, "epler": 150, 
+    "appelsin": 150, "appelsiner": 150, 
+    "egg": 60
 };
 
-// 2. Hjelpefunksjon for å hente næringsverdier fra Matvaretabellens format[cite: 1]
+// 3. Hjelpefunksjon for å hente næringsverdier
 function extractMacros(food) {
     const findNutrient = (id) => {
+        if (!food.nutrients) return 0;
         const n = food.nutrients.find(nutrient => nutrient.nutrientId === id);
         return n ? n.quantity : 0;
     };
 
     return {
-        kcal: findNutrient('Energij'), // Kalorier[cite: 1]
-        protein: findNutrient('Protei'), // Protein[cite: 1]
-        carbs: findNutrient('Karbo'),   // Karbohydrater[cite: 1]
-        fat: findNutrient('Fett')        // Fett[cite: 1]
+        kcal: findNutrient('Energij'),
+        protein: findNutrient('Protei'),
+        carbs: findNutrient('Karbo'),
+        fat: findNutrient('Fett')
     };
 }
 
-// 3. Hente data fra API[cite: 1]
+// 4. Hente data fra Matvaretabellen
 async function loadFoods() {
     if (foodsCache.length > 0) return;
     try {
         const response = await fetch(PROXY_URL + MATVARE_URL);
         const data = await response.json();
         foodsCache = Array.isArray(data) ? data : (data.foods || []);
+        console.log(`Vellykket nedlasting: Fant ${foodsCache.length} matvarer.`);
     } catch (e) {
         console.error("Kunne ikke laste matvaredata:", e);
+        alert("Klarte ikke å hente data fra Matvaretabellen. Sjekk nettkoblingen.");
     }
 }
 
-// 4. Tolke tekstlinjer (f.eks. "150 g havregryn")[cite: 1]
+// 5. Forbedret logikk for å tolke tekstlinjene
 function parseLine(line) {
     const regex = /^(\d+(?:[.,]\d+)?)\s*([a-zA-ZæøåÆØÅ]*)\s*(.*)$/i;
     const match = line.trim().match(regex);
     if (!match) return null;
 
     const amount = parseFloat(match[1].replace(",", "."));
-    const unit = match[2].toLowerCase();
-    const ingredient = match[3].trim();
-    const grams = (unitToGrams[unit] || 1) * amount;
+    let unit = match[2].toLowerCase();
+    let ingredient = match[3].trim().toLowerCase();
 
-    return { originalLine: line, ingredient, grams };
+    // HVIS ingrediens mangler (f.eks. "1 eple"), bruker vi enheten som ingrediens.
+    if (ingredient === "") {
+        ingredient = unit;
+    }
+
+    // Finn vekt basert på enhet eller ingrediensnavn (f.eks "eple")
+    const grams = (unitToGrams[unit] || unitToGrams[ingredient] || 1) * amount;
+
+    return { originalLine: line, ingredient: ingredient, grams: grams };
 }
 
-// 5. Hovedfunksjon som kjøres ved knappetrykk[cite: 1, 2]
+// 6. Kjøres når du trykker på knappen
 document.getElementById("parseBtn").addEventListener("click", async () => {
     const btn = document.getElementById("parseBtn");
     btn.textContent = "Laster data...";
@@ -64,9 +77,13 @@ document.getElementById("parseBtn").addEventListener("click", async () => {
         const parsed = parseLine(line);
         if (!parsed) return null;
 
-        // Finn nærmeste match i matvarenavnene[cite: 1]
+        // Fjerner en 's' eller 'er' på slutten for enklere søk (epler -> eple)
+        let searchWord = parsed.ingredient;
+        if (searchWord.endsWith("er")) searchWord = searchWord.slice(0, -2);
+        else if (searchWord.endsWith("s")) searchWord = searchWord.slice(0, -1);
+
         const match = foodsCache.find(f => 
-            f.foodName.toLowerCase().includes(parsed.ingredient.toLowerCase())
+            f.foodName.toLowerCase().includes(searchWord)
         );
 
         return {
@@ -79,7 +96,7 @@ document.getElementById("parseBtn").addEventListener("click", async () => {
     btn.textContent = "Analyser oppskrift";
 });
 
-// 6. Oppdatere tabellen i HTML[cite: 1, 2]
+// 7. Bygger tabellen
 function renderTable() {
     const tbody = document.getElementById("resultsBody");
     tbody.innerHTML = "";

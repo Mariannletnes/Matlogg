@@ -1,14 +1,15 @@
-// Vi bruker en proxy for å unngå CORS-feil på GitHub
+// 1. Konfigurasjon og Proxy for å unngå CORS-feil på GitHub[cite: 1]
 const PROXY_URL = "https://corsproxy.io/?";
 const MATVARE_URL = encodeURIComponent("https://www.matvaretabellen.no/api/nb/foods.json");
 let foodsCache = [];
 let rowsState = [];
 
+// Standardvekter for enheter[cite: 1]
 const unitToGrams = {
     "g": 1, "gram": 1, "kg": 1000, "dl": 100, "l": 1000, "stk": 100, "eple": 150, "egg": 60
 };
 
-// Hjelpefunksjon for å hente ut verdier fra Matvaretabellens komplekse format
+// 2. Hjelpefunksjon for å hente næringsverdier fra Matvaretabellens format[cite: 1]
 function extractMacros(food) {
     const findNutrient = (id) => {
         const n = food.nutrients.find(nutrient => nutrient.nutrientId === id);
@@ -16,25 +17,26 @@ function extractMacros(food) {
     };
 
     return {
-        kcal: findNutrient('Energij'), // 'Energij' er ID for kJ/kcal i tabellen
-        protein: findNutrient('Protei'),
-        carbs: findNutrient('Karbo'),
-        fat: findNutrient('Fett')
+        kcal: findNutrient('Energij'), // Kalorier[cite: 1]
+        protein: findNutrient('Protei'), // Protein[cite: 1]
+        carbs: findNutrient('Karbo'),   // Karbohydrater[cite: 1]
+        fat: findNutrient('Fett')        // Fett[cite: 1]
     };
 }
 
+// 3. Hente data fra API[cite: 1]
 async function loadFoods() {
     if (foodsCache.length > 0) return;
     try {
         const response = await fetch(PROXY_URL + MATVARE_URL);
         const data = await response.json();
         foodsCache = Array.isArray(data) ? data : (data.foods || []);
-        console.log("Data lastet: ", foodsCache.length, "varer");
     } catch (e) {
-        console.error("Kunne ikke laste data via proxy:", e);
+        console.error("Kunne ikke laste matvaredata:", e);
     }
 }
 
+// 4. Tolke tekstlinjer (f.eks. "150 g havregryn")[cite: 1]
 function parseLine(line) {
     const regex = /^(\d+(?:[.,]\d+)?)\s*([a-zA-ZæøåÆØÅ]*)\s*(.*)$/i;
     const match = line.trim().match(regex);
@@ -48,6 +50,7 @@ function parseLine(line) {
     return { originalLine: line, ingredient, grams };
 }
 
+// 5. Hovedfunksjon som kjøres ved knappetrykk[cite: 1, 2]
 document.getElementById("parseBtn").addEventListener("click", async () => {
     const btn = document.getElementById("parseBtn");
     btn.textContent = "Laster data...";
@@ -61,7 +64,7 @@ document.getElementById("parseBtn").addEventListener("click", async () => {
         const parsed = parseLine(line);
         if (!parsed) return null;
 
-        // Finn beste match ved å sjekke om navnet inneholder søkeordet[cite: 1]
+        // Finn nærmeste match i matvarenavnene[cite: 1]
         const match = foodsCache.find(f => 
             f.foodName.toLowerCase().includes(parsed.ingredient.toLowerCase())
         );
@@ -76,6 +79,7 @@ document.getElementById("parseBtn").addEventListener("click", async () => {
     btn.textContent = "Analyser oppskrift";
 });
 
+// 6. Oppdatere tabellen i HTML[cite: 1, 2]
 function renderTable() {
     const tbody = document.getElementById("resultsBody");
     tbody.innerHTML = "";

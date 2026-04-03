@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matlogg</title>
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
   <main class="container">
     <section class="card">
       <h1>Matlogg</h1>
-      <p>Lim inn én ingrediens per linje. Appen tolker mengde og ingrediens, og foreslår matvarer du kan velge mellom.</p>
+      <p>Lim inn én ingrediens per linje. Appen foreslår matvarer. Du velger riktig treff.</p>
 
       <div class="form-grid">
         <div class="field">
@@ -34,7 +34,8 @@
       </div>
 
       <div class="button-row">
-        <button id="parseBtn" class="primary">Tolk oppskrift</button>
+        <button id="parseBtn" class="primary" type="button">Tolk oppskrift</button>
+        <button id="exampleBtn" type="button">Legg inn eksempel</button>
         <button id="clearBtn" type="button">Tøm</button>
       </div>
     </section>
@@ -52,6 +53,7 @@
               <th>Linje</th>
               <th>Tolket ingrediens</th>
               <th>Gram</th>
+              <th>Søkeord</th>
               <th>Forslag</th>
               <th>Valgt vare</th>
               <th>kcal</th>
@@ -113,6 +115,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>

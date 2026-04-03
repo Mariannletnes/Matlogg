@@ -6,13 +6,13 @@ body {
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 32px auto;
-  padding: 0 16px 40px;
+  padding: 0 16px 48px;
 }
 
 .card {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #dde3ea;
   border-radius: 18px;
   padding: 24px;
@@ -28,24 +28,28 @@ p {
   color: #4b5563;
 }
 
-.grid.two {
+.form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 220px;
   gap: 14px;
   margin-bottom: 14px;
 }
 
-label span {
+.field {
+  margin-bottom: 14px;
+}
+
+label {
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
-input, textarea, button {
+input, textarea, select, button {
   font: inherit;
 }
 
-input, textarea {
+input, textarea, select {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #cfd8e3;
@@ -59,10 +63,10 @@ textarea {
   line-height: 1.5;
 }
 
-.actions {
+.button-row {
   display: flex;
   gap: 10px;
-  margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -80,11 +84,11 @@ button.primary {
   color: #fff;
 }
 
-.section-head {
+.section-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
 }
 
 .muted {
@@ -98,17 +102,31 @@ button.primary {
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 1200px;
 }
 
 th, td {
   text-align: left;
-  padding: 14px 12px;
+  padding: 12px 10px;
   border-bottom: 1px solid #e5e7eb;
   vertical-align: top;
 }
 
 th {
-  font-size: 15px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+td small {
+  color: #6b7280;
+}
+
+.row-search {
+  min-width: 140px;
+}
+
+.row-select {
+  min-width: 220px;
 }
 
 .badge {
@@ -116,7 +134,13 @@ th {
   padding: 6px 10px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.badge.waiting {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .badge.ok {
@@ -124,13 +148,13 @@ th {
   color: #166534;
 }
 
-.badge.warn {
-  background: #fef3c7;
-  color: #92400e;
+.badge.unknown {
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .summary-grid {
-  margin-top: 18px;
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
@@ -143,18 +167,25 @@ th {
   background: #f8fafc;
 }
 
-.summary-box .label {
+.summary-label {
   color: #6b7280;
   margin-bottom: 6px;
 }
 
-.summary-box .value {
+.summary-value {
   font-size: 18px;
   font-weight: 800;
 }
 
-@media (max-width: 800px) {
-  .grid.two,
+.inline-button {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .form-grid,
   .summary-grid {
     grid-template-columns: 1fr;
   }

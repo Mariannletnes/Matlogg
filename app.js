@@ -6,8 +6,21 @@ const fallbackDb = {
   "egg": { kcal: 143, protein: 13, carbs: 1.1, fat: 10.3 },
   "banan": { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
   "bananer": { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 },
+  "eple": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
+  "epler": { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 },
   "kyllingfilet": { kcal: 120, protein: 23, carbs: 0, fat: 2 },
-  "makrell i tomat": { kcal: 220, protein: 13, carbs: 4, fat: 16 }
+  "makrell i tomat": { kcal: 220, protein: 13, carbs: 4, fat: 16 },
+  "vann": { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+  "tørrgjær": { kcal: 325, protein: 40, carbs: 20, fat: 6 },
+  "salt": { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+  "olje": { kcal: 900, protein: 0, carbs: 0, fat: 100 },
+  "hvetemel": { kcal: 340, protein: 10, carbs: 71, fat: 1.5 },
+  "sammalt hvete fin": { kcal: 336, protein: 13, carbs: 60, fat: 2.5 },
+  "havregryn": { kcal: 366, protein: 13, carbs: 60, fat: 7 },
+  "solsikkekjerner": { kcal: 585, protein: 21, carbs: 12, fat: 51 },
+  "chiafrø": { kcal: 446, protein: 21, carbs: 4, fat: 31 },
+  "mager kesam": { kcal: 59, protein: 10, carbs: 3.9, fat: 1 },
+  "kesam": { kcal: 59, protein: 10, carbs: 3.9, fat: 1 }
 };
 
 const unitToGrams = {
@@ -22,7 +35,9 @@ const unitToGrams = {
   "boks": 110,
   "egg": 60,
   "banan": 120,
-  "bananer": 120
+  "bananer": 120,
+  "eple": 180,
+  "epler": 180
 };
 
 function normalizeText(text) {
@@ -30,36 +45,63 @@ function normalizeText(text) {
     .toLowerCase()
     .trim()
     .replace(/\blunkent\b/g, "")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .replace(/[.,]$/, "");
+}
+
+function getIngredientVariants(text) {
+  const value = normalizeText(text);
+  const variants = [value];
+
+  if (value.endsWith("er")) {
+    variants.push(value.slice(0, -2));
+  }
+
+  if (value.endsWith("ene")) {
+    variants.push(value.slice(0, -3));
+  }
+
+  if (!value.endsWith("er")) {
+    variants.push(value + "er");
+  }
+
+  return [...new Set(variants.filter(Boolean))];
 }
 
 async function loadFoods() {
-  if (foodsCache.length) return foodsCache;
+  if (foodsCache.length > 0) {
+    return foodsCache;
+  }
 
-  const res = await fetch(MATVARE_URL);
-  const data = await res.json();
+  const response = await fetch(MATVARE_URL);
+  const data = await response.json();
   foodsCache = data.foods || [];
   return foodsCache;
 }
 
 function findQuantityDeep(obj, needles) {
-  if (!obj || typeof obj !== "object") return null;
+  if (!obj || typeof obj !== "object") {
+    return null;
+  }
 
   for (const [key, value] of Object.entries(obj)) {
     const lowerKey = key.toLowerCase();
 
-    if (needles.some(n => lowerKey.includes(n))) {
+    if (needles.some(needle => lowerKey.includes(needle))) {
       if (value && typeof value === "object" && typeof value.quantity === "number") {
         return value.quantity;
       }
+
       if (typeof value === "number") {
         return value;
       }
     }
 
     if (value && typeof value === "object") {
-      const found = findQuantityDeep(value, needles);
-      if (found !== null) return found;
+      const nested = findQuantityDeep(value, needles);
+      if (nested !== null) {
+        return nested;
+      }
     }
   }
 
@@ -67,17 +109,10 @@ function findQuantityDeep(obj, needles) {
 }
 
 function extractMacros(food) {
-  const kcal =
-    findQuantityDeep(food, ["calories", "kcal"]) ?? 0;
-
-  const protein =
-    findQuantityDeep(food, ["protein"]) ?? 0;
-
-  const carbs =
-    findQuantityDeep(food, ["karbo", "carb"]) ?? 0;
-
-  const fat =
-    findQuantityDeep(food, ["fett", "fat"]) ?? 0;
+  const kcal = findQuantityDeep(food, ["kcal", "calories", "energi"]) ?? 0;
+  const protein = findQuantityDeep(food, ["protein"]) ?? 0;
+  const carbs = findQuantityDeep(food, ["karbo", "carb"]) ?? 0;
+  const fat = findQuantityDeep(food, ["fett", "fat"]) ?? 0;
 
   return { kcal, protein, carbs, fat };
 }
@@ -85,16 +120,18 @@ function extractMacros(food) {
 function scoreFoodMatch(food, query) {
   const q = normalizeText(query);
   const name = normalizeText(food.foodName || "");
-  const keywords = (food.searchKeywords || []).map(k => normalizeText(k));
+  const keywords = Array.isArray(food.searchKeywords)
+    ? food.searchKeywords.map(k => normalizeText(k))
+    : [];
 
   if (name === q) return 100;
   if (keywords.includes(q)) return 95;
   if (name.includes(q)) return 80;
   if (q.includes(name) && name.length > 2) return 70;
 
-  for (const kw of keywords) {
-    if (q.includes(kw) && kw.length > 2) return 65;
-    if (kw.includes(q) && q.length > 2) return 60;
+  for (const keyword of keywords) {
+    if (q.includes(keyword) && keyword.length > 2) return 65;
+    if (keyword.includes(q) && q.length > 2) return 60;
   }
 
   return 0;
@@ -102,39 +139,51 @@ function scoreFoodMatch(food, query) {
 
 function findBestFood(query) {
   const scored = foodsCache
-    .map(food => ({ food, score: scoreFoodMatch(food, query) }))
-    .filter(x => x.score > 0)
+    .map(food => ({
+      food,
+      score: scoreFoodMatch(food, query)
+    }))
+    .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score);
 
   return scored.length ? scored[0].food : null;
 }
 
 async function lookupIngredient(ingredientName) {
-  const cleaned = normalizeText(ingredientName);
+  const variants = getIngredientVariants(ingredientName);
 
-  if (fallbackDb[cleaned]) {
-    return {
-      ingredientName: cleaned,
-      macros: fallbackDb[cleaned],
-      status: "OK"
-    };
+  for (const variant of variants) {
+    if (fallbackDb[variant]) {
+      return {
+        ingredientName: variant,
+        macros: fallbackDb[variant],
+        status: "OK"
+      };
+    }
   }
 
-  await loadFoods();
-  const match = findBestFood(cleaned);
+  try {
+    await loadFoods();
 
-  if (!match) {
-    return {
-      ingredientName: cleaned,
-      macros: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-      status: "Ukjent"
-    };
+    for (const variant of variants) {
+      const match = findBestFood(variant);
+
+      if (match) {
+        return {
+          ingredientName: match.foodName || variant,
+          macros: extractMacros(match),
+          status: "OK"
+        };
+      }
+    }
+  } catch (error) {
+    console.log("Klarte ikke å hente Matvaretabellen", error);
   }
 
   return {
-    ingredientName: match.foodName || cleaned,
-    macros: extractMacros(match),
-    status: "OK"
+    ingredientName: normalizeText(ingredientName),
+    macros: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+    status: "Ukjent"
   };
 }
 
@@ -143,7 +192,7 @@ function parseLine(line) {
   let unit = "";
   let ingredient = "";
 
-  let match = line.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zæøå]+)\s+(.+)$/i);
+  let match = line.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZæøåÆØÅ]+)\s+(.+)$/i);
 
   if (match) {
     amount = parseFloat(match[1].replace(",", "."));
@@ -151,7 +200,10 @@ function parseLine(line) {
     ingredient = match[3].trim();
   } else {
     match = line.match(/^(\d+(?:[.,]\d+)?)\s+(.+)$/i);
-    if (!match) return null;
+
+    if (!match) {
+      return null;
+    }
 
     amount = parseFloat(match[1].replace(",", "."));
     ingredient = match[2].trim().toLowerCase();
@@ -160,6 +212,8 @@ function parseLine(line) {
       unit = "egg";
       ingredient = "egg";
     } else if (ingredient === "banan" || ingredient === "bananer") {
+      unit = ingredient;
+    } else if (ingredient === "eple" || ingredient === "epler") {
       unit = ingredient;
     } else {
       unit = "";
@@ -170,16 +224,27 @@ function parseLine(line) {
 
   return {
     originalLine: line,
-    ingredient,
+    ingredient: normalizeText(ingredient),
     grams
   };
 }
 
+function setTotals(totalKcal, totalProtein, totalCarbs, totalFat, servings) {
+  document.getElementById("totalKcal").innerText = Math.round(totalKcal) + " kcal";
+  document.getElementById("totalProtein").innerText = totalProtein.toFixed(1) + " g";
+  document.getElementById("totalCarbs").innerText = totalCarbs.toFixed(1) + " g";
+  document.getElementById("totalFat").innerText = totalFat.toFixed(1) + " g";
+
+  document.getElementById("perKcal").innerText = Math.round(totalKcal / servings) + " kcal";
+  document.getElementById("perProtein").innerText = (totalProtein / servings).toFixed(1) + " g";
+  document.getElementById("perCarbs").innerText = (totalCarbs / servings).toFixed(1) + " g";
+  document.getElementById("perFat").innerText = (totalFat / servings).toFixed(1) + " g";
+}
+
 async function parseRecipe() {
   const text = document.getElementById("recipeInput").value;
-  const servings = parseInt(document.getElementById("servings").value) || 1;
-
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const servings = parseInt(document.getElementById("servings").value, 10) || 1;
+  const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
 
   const tbody = document.getElementById("resultsBody");
   tbody.innerHTML = "";
@@ -191,7 +256,10 @@ async function parseRecipe() {
 
   for (const line of lines) {
     const parsed = parseLine(line);
-    if (!parsed) continue;
+
+    if (!parsed) {
+      continue;
+    }
 
     const lookup = await lookupIngredient(parsed.ingredient);
     const factor = parsed.grams / 100;
@@ -217,22 +285,15 @@ async function parseRecipe() {
       <td>${fat.toFixed(1)} g</td>
       <td>${lookup.status}</td>
     `;
+
     tbody.appendChild(row);
   }
 
-  document.getElementById("totalKcal").innerText = Math.round(totalKcal) + " kcal";
-  document.getElementById("totalProtein").innerText = totalProtein.toFixed(1) + " g";
-  document.getElementById("totalCarbs").innerText = totalCarbs.toFixed(1) + " g";
-  document.getElementById("totalFat").innerText = totalFat.toFixed(1) + " g";
-
-  document.getElementById("perKcal").innerText = Math.round(totalKcal / servings) + " kcal";
-  document.getElementById("perProtein").innerText = (totalProtein / servings).toFixed(1) + " g";
-  document.getElementById("perCarbs").innerText = (totalCarbs / servings).toFixed(1) + " g";
-  document.getElementById("perFat").innerText = (totalFat / servings).toFixed(1) + " g";
+  setTotals(totalKcal, totalProtein, totalCarbs, totalFat, servings);
 }
 
 document.getElementById("parseBtn").addEventListener("click", parseRecipe);
 
 loadFoods().catch(() => {
-  console.log("Klarte ikke å laste Matvaretabellen. Bruker fallback der det finnes.");
+  console.log("Matvaretabellen kunne ikke lastes ved oppstart.");
 });
